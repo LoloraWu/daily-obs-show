@@ -1,0 +1,66 @@
+/* Basic reset */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans TC', 'Noto Sans', Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif; }
+
+/* Layout */
+.site-header { position: sticky; top: 0; background: #111; color: #fff; padding: 12px 16px; z-index: 10; }
+.toc { position: fixed; top: 96px; left: 8px; width: 150px; max-height: calc(100vh - 120px); overflow: auto; padding: 8px; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+.toc a { display: block; padding: 6px 8px; color: #0f2a6b; text-decoration: none; border-radius: 6px; }
+.toc a:hover { background: #eef4ff; }
+
+.container { width: 100%; max-width: none; margin: 16px 0; padding: 0 12px 0 180px; display: grid; grid-template-columns: 1fr; gap: 16px; }
+.container.with-toc { padding-left: 180px; }
+/* Force single column per request */
+@media (min-width: 720px) { .container { grid-template-columns: 1fr; } }
+
+.page-title { grid-column: 1 / -1; }
+.date-title { font-size: 24px; font-weight: 700; }
+
+/* controls removed */
+
+.card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+.card-title { margin: 0 0 10px; font-size: 18px; }
+.day { margin-bottom: 18px; }
+.day { scroll-margin-top: 96px; }
+.day .date-title {
+  margin-bottom: 10px;
+  background: #eef4ff;            /* 淡藍底，閱讀友善 */
+  color: #0f2a6b;                  /* 深藍字色 */
+  padding: 10px 12px;
+  border: 1px solid #dbe4ff;      /* 柔和邊框 */
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+.kv { font-size: 16px; color: #111; }
+.list { list-style: none; padding: 0; margin: 0; }
+.list li { padding: 8px 0; border-bottom: 1px dashed #eee; }
+.list li:last-child { border-bottom: none; }
+
+.diet-item { padding: 8px 0; border-bottom: 1px dashed #eee; }
+.diet-item:last-child { border-bottom: none; }
+.diet-meta { font-size: 14px; color: #555; }
+.diet-item .item-text { font-size: 16px; margin-top: 4px; }
+
+.sleep-hours { font-weight: 700; }
+
+.photo-strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; align-items: center; }
+.photo-strip img { height: auto; max-height: 200px; width: auto; max-width: 100%; border-radius: 10px; object-fit: contain; background: #eee; display: block; }
+
+/* Dark mode (prefers) */
+@media (prefers-color-scheme: dark) {
+  body { background: #0b0b0b; color: #eaeaea; }
+  .toc { background: #141414; border-color: #222; }
+  .toc a { color: #cbd5e1; }
+  .toc a:hover { background: #1f2937; }
+  .card { background: #141414; border-color: #222; }
+  .list li { border-bottom-color: #222; }
+  .diet-item { background: #101010; border-color: #222; }
+  .day .date-title {
+    background: #0f172a;          /* 深色底 */
+    color: #cbd5e1;               /* 淡灰藍字色 */
+    border-color: #1f2937;
+  }
+}
+
+
