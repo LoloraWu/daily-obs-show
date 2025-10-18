@@ -42,6 +42,10 @@ def parse_daily_markdown(md_path: str) -> Dict[str, Any]:
         "sleep": [],
         "exercise": [],
         "diet": [],
+        "healthy_tasks": {
+            "sleep_before_12": None,
+            "no_eat_after_20": None,
+        },
     }
 
     section = None  # one of {None, 'sleep', 'exercise', 'diet'}
@@ -110,6 +114,19 @@ def parse_daily_markdown(md_path: str) -> Dict[str, Any]:
             continue
         if in_code_block:
             continue
+
+        # Parse key checkbox tasks regardless of section
+        if line.startswith("- ["):
+            checked = None
+            if line.startswith("- [x]") or line.startswith("- [X]"):
+                checked = True
+            elif line.startswith("- [ ]"):
+                checked = False
+            if checked is not None:
+                if "20點後不進食" in line:
+                    result["healthy_tasks"]["no_eat_after_20"] = checked
+                if "11點睡覺，最晚12點睡覺" in line:
+                    result["healthy_tasks"]["sleep_before_12"] = checked
 
         # Detect sections by headings (contains specific keywords/emojis)
         if line.startswith("#### "):
@@ -185,8 +202,20 @@ def parse_daily_markdown(md_path: str) -> Dict[str, Any]:
                 cur_diet["images"].extend(imgs)
                 # don't continue; also try to append any plain text in the same line (without wiki embeds)
 
-            # Append free-form text lines (e.g., next line describing the item)
+            # Append free-form text lines (e.g., next line describing the item),
+            # but drop checkboxes/horizontal rules/ref/link-only lines
+            # Skip task checkboxes that live under the diet section
+            if line.startswith('- ['):
+                continue
+            # Skip horizontal rule or divider lines
+            if line.startswith('---'):
+                continue
             clean = strip_inline_fields(strip_wiki_images(line)).strip()
+            if clean.startswith('# REF'):
+                clean = ''
+            # Skip pure wiki-link lines like [[...]] after stripping
+            if re.fullmatch(r"\[\[[^\]]+\]\]", clean or ''):
+                clean = ''
             if clean:
                 if cur_diet["item"]:
                     # separate with a space

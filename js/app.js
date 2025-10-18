@@ -61,7 +61,7 @@ function renderDayTo(root, day) {
 
   // Sleep card
   const sleepCard = el('section', 'card');
-  sleepCard.appendChild(el('h2', 'card-title', '💤 睡覺時間'));
+  let sleepTitle = el('h2', 'card-title', '💤 睡覺時間');
   const sleepList = el('ul', 'list');
   const sleepSegments = [];
   (day.sleep || []).forEach(s => {
@@ -86,6 +86,13 @@ function renderDayTo(root, day) {
     });
     sleepList.appendChild(li);
   }
+  // Add late sleep indicator
+  if (day.healthy_tasks && day.healthy_tasks.sleep_before_12 === false) {
+    const warn = el('span');
+    warn.textContent = '  ❌ 晚睡';
+    sleepTitle.appendChild(warn);
+  }
+  sleepCard.appendChild(sleepTitle);
   sleepCard.appendChild(sleepList);
   dayBox.appendChild(sleepCard);
 
@@ -93,11 +100,17 @@ function renderDayTo(root, day) {
   const exList = el('ul', 'list');
   (day.exercise || []).forEach(e => {
     const li = el('li');
-    const parts = [];
-    if (e.type) parts.push(e.type);
-    if (e.start) parts.push(e.start);
-    if (e.duration) parts.push(`${e.duration}`);
-    li.textContent = parts.join(' · ');
+    const duration = (e.duration || '').trim();
+    const start = (e.start || '').trim();
+    const typeText = (e.type || '').trim();
+    const minutes = /^\d+$/.test(duration) ? `${duration}分鐘` : duration;
+    const startPadded = start ? start.padStart(4, '0') : '';
+    const startFmt = /^\d{4}$/.test(startPadded) ? `${parseInt(startPadded.slice(0,2),10)}:${startPadded.slice(2)}` : start;
+    const segs = [];
+    if (typeText) segs.push(typeText);
+    if (minutes) segs.push(`⏰ ${minutes}`);
+    if (startFmt) segs.push(startFmt);
+    li.textContent = segs.join(' | ');
     exList.appendChild(li);
   });
   if (exList.children.length) {
@@ -119,7 +132,8 @@ function renderDayTo(root, day) {
   });
   if (dietList.children.length) {
     const dietCard = el('section', 'card');
-    dietCard.appendChild(el('h2', 'card-title', '🍎 飲食'));
+    const dietTitle = el('h2', 'card-title', '🍎 飲食');
+    dietCard.appendChild(dietTitle);
     dietCard.appendChild(dietList);
     dayBox.appendChild(dietCard);
   }
@@ -132,7 +146,7 @@ function renderDayTo(root, day) {
     const base = String(src || '').split('/').pop();
     if (!base || seenBases.has(base)) return;
     seenBases.add(base);
-    imgsAgg.push({ src, alt: d.item || '' });
+    imgsAgg.push({ src, alt: '' });
   }));
   imgsAgg.forEach(({ src, alt }) => {
     const img = new Image();
@@ -152,7 +166,6 @@ function renderDayTo(root, day) {
   });
   if (photoStrip.children.length) {
     const photoCard = el('section', 'card');
-    photoCard.appendChild(el('h2', 'card-title', '🖼️ 照片'));
     photoCard.appendChild(photoStrip);
     dayBox.appendChild(photoCard);
   }
