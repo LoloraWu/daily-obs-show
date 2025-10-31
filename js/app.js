@@ -54,10 +54,49 @@ function formatHM(val) {
   return s;
 }
 
+function parseTimeToMinutes(val) {
+  if (val == null) return null;
+  let s = String(val).trim();
+  if (!s) return null;
+  // Normalize "HH:MM" or "H:MM"
+  const colon = /^\s*(\d{1,2})\s*:\s*(\d{2})\s*$/;
+  const m1 = s.match(colon);
+  if (m1) {
+    const hh = parseInt(m1[1], 10);
+    const mm = parseInt(m1[2], 10);
+    if (!Number.isNaN(hh) && !Number.isNaN(mm)) return hh * 60 + mm;
+    return null;
+  }
+  // Normalize digits: HMM / HHMM
+  const digits = s.replace(/\D/g, '');
+  if (!digits) return null;
+  if (digits.length === 3) {
+    // e.g., 930 -> 09:30
+    const hh = parseInt(digits.slice(0, 1), 10);
+    const mm = parseInt(digits.slice(1), 10);
+    if (!Number.isNaN(hh) && !Number.isNaN(mm)) return hh * 60 + mm;
+  } else if (digits.length === 4) {
+    const hh = parseInt(digits.slice(0, 2), 10);
+    const mm = parseInt(digits.slice(2), 10);
+    if (!Number.isNaN(hh) && !Number.isNaN(mm)) return hh * 60 + mm;
+  }
+  return null;
+}
+
 function renderDayTo(root, day) {
   const dayBox = el('section', 'day');
   const title = el('div', 'date-title', day.date || '');
   dayBox.appendChild(title);
+
+  // Fitness notes directly under the date title
+  if (Array.isArray(day.fitness_notes) && day.fitness_notes.length) {
+    const fitList = el('ul', 'fitness-notes list');
+    day.fitness_notes.forEach(t => {
+      if (!t) return;
+      fitList.appendChild(el('li', null, String(t)));
+    });
+    dayBox.appendChild(fitList);
+  }
 
   // Sleep card
   const sleepCard = el('section', 'card');
@@ -86,8 +125,12 @@ function renderDayTo(root, day) {
     });
     sleepList.appendChild(li);
   }
-  // Add late sleep indicator
-  if (day.healthy_tasks && day.healthy_tasks.sleep_before_12 === false) {
+  // Add late sleep indicator by time (ignore checkbox): any sleep start after midnight counts
+  const lateSleep = (day.sleep || []).some(s => {
+    const m = parseTimeToMinutes(s && s.start);
+    return m != null && m >= 0 && m < 360; // 00:00~05:59 視為跨日入睡 → 晚睡
+  });
+  if (lateSleep) {
     const warn = el('span');
     warn.textContent = '  ❌ 晚睡';
     sleepTitle.appendChild(warn);
@@ -133,6 +176,16 @@ function renderDayTo(root, day) {
   if (dietList.children.length) {
     const dietCard = el('section', 'card');
     const dietTitle = el('h2', 'card-title', '🍎 飲食');
+    // Add late eating indicator by time (ignore checkbox): any diet time >= 20:00
+    const lateEating = (day.diet || []).some(d => {
+      const m = parseTimeToMinutes(d && d.time);
+      return m != null && m >= 20 * 60;
+    });
+    if (lateEating) {
+      const warn = el('span');
+      warn.textContent = '  ❌ 八點後進食';
+      dietTitle.appendChild(warn);
+    }
     dietCard.appendChild(dietTitle);
     dietCard.appendChild(dietList);
     dayBox.appendChild(dietCard);

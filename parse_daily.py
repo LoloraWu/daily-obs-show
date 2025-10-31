@@ -30,6 +30,14 @@ def strip_wiki_images(text: str) -> str:
     return WIKI_IMAGE_RE.sub("", text)
 
 
+def remove_stored_tags(text: str) -> str:
+    """Remove trailing/inline markers like "# 🔗 STORED" (with flexible spaces/#).
+    Examples matched: " # 🔗 STORED", "# # 🔗 STORED", "🔗 STORED".
+    """
+    # Remove any number of leading spaces and '#' before the marker
+    return re.sub(r"\s*(?:#\s*)*🔗\s*STORED\b", "", text).strip()
+
+
 def parse_daily_markdown(md_path: str) -> Dict[str, Any]:
     with open(md_path, "r", encoding="utf-8") as f:
         lines = [ln.rstrip("\n") for ln in f]
@@ -42,6 +50,7 @@ def parse_daily_markdown(md_path: str) -> Dict[str, Any]:
         "sleep": [],
         "exercise": [],
         "diet": [],
+      "fitness_notes": [],
         "healthy_tasks": {
             "sleep_before_12": None,
             "no_eat_after_20": None,
@@ -50,6 +59,9 @@ def parse_daily_markdown(md_path: str) -> Dict[str, Any]:
 
     section = None  # one of {None, 'sleep', 'exercise', 'diet'}
     in_code_block = False
+
+    # Fitness notes state: triggered by a bullet line "- 💪 體能狀態："
+    collecting_fitness = False
 
     # Sleep temp holder
     cur_sleep = {"start": None, "end": None, "hours": None}
@@ -128,6 +140,25 @@ def parse_daily_markdown(md_path: str) -> Dict[str, Any]:
                 if "11點睡覺，最晚12點睡覺" in line:
                     result["healthy_tasks"]["sleep_before_12"] = checked
 
+        # Detect and collect fitness notes (free-form lines after a marker bullet)
+        # Start condition: a bullet line like "- 💪 體能狀態："
+        if line.startswith("- ") and ("💪" in line and "體能狀態" in line):
+            collecting_fitness = True
+            # do not treat as section; continue to next line to collect contents
+            continue
+
+        if collecting_fitness:
+            # Stop conditions: new bullet/checkbox/section heading or empty line
+            if (not line) or line.startswith("- ") or line.startswith("#### "):
+                collecting_fitness = False
+                # fall-through to allow normal processing of this line
+            else:
+                clean_note = strip_inline_fields(strip_wiki_images(raw)).strip()
+                if clean_note:
+                    result["fitness_notes"].append(clean_note)
+                # handled as part of fitness collection
+                continue
+
         # Detect sections by headings (contains specific keywords/emojis)
         if line.startswith("#### "):
             # Flushing ongoing items when leaving sections
@@ -189,8 +220,9 @@ def parse_daily_markdown(md_path: str) -> Dict[str, Any]:
                 raw = line.split("：", 1)[1]
                 # capture images from the same line
                 cur_diet["images"].extend(extract_images(raw))
-                # strip wiki image embeds from the text, and inline fields
-                cur_diet["item"] = strip_inline_fields(strip_wiki_images(raw)).strip()
+                # strip wiki image embeds and inline fields, then remove stored tag markers
+                base = strip_inline_fields(strip_wiki_images(raw)).strip()
+                cur_diet["item"] = remove_stored_tags(base)
                 continue
             if line.startswith("飲食照片："):
                 cur_diet["images"].extend(extract_images(line))
@@ -211,6 +243,7 @@ def parse_daily_markdown(md_path: str) -> Dict[str, Any]:
             if line.startswith('---'):
                 continue
             clean = strip_inline_fields(strip_wiki_images(line)).strip()
+            clean = remove_stored_tags(clean)
             if clean.startswith('# REF'):
                 clean = ''
             # Skip pure wiki-link lines like [[...]] after stripping

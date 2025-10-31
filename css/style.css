@@ -32,6 +32,21 @@ html, body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFo
   box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
 
+/* Fitness notes block shares the same background as date title */
+.day .fitness-notes {
+  background: #eef4ff;
+  color: #0f2a6b;
+  padding: 8px 12px 12px;
+  border: 1px solid #dbe4ff;
+  border-top: none;                 /* 視覺銜接日期標題 */
+  border-radius: 0 0 10px 10px;     /* 與標題圓角連續 */
+  margin: -8px 0 10px;              /* 稍微上貼標題，形成同一區塊感 */
+}
+.day .fitness-notes li {
+  padding: 4px 0;
+  border-bottom: none;              /* 去掉虛線，避免在淺底上不明顯 */
+}
+
 .kv { font-size: 16px; color: #111; }
 .list { list-style: none; padding: 0; margin: 0; }
 .list li { padding: 8px 0; border-bottom: 1px dashed #eee; }
@@ -59,6 +74,11 @@ html, body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFo
   .day .date-title {
     background: #0f172a;          /* 深色底 */
     color: #cbd5e1;               /* 淡灰藍字色 */
+    border-color: #1f2937;
+  }
+  .day .fitness-notes {
+    background: #0f172a;
+    color: #cbd5e1;
     border-color: #1f2937;
   }
 }
