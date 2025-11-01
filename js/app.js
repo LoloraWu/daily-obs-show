@@ -218,7 +218,7 @@ function renderDayTo(root, day) {
     photoStrip.appendChild(img);
   });
   if (photoStrip.children.length) {
-    const photoCard = el('section', 'card');
+    const photoCard = el('section', 'photo-card card');
     photoCard.appendChild(photoStrip);
     dayBox.appendChild(photoCard);
   }

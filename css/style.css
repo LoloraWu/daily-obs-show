@@ -83,4 +83,20 @@ html, body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFo
   }
 }
 
+/* Wide-screen 1:1 two-column layout per day */
+@media (min-width: 960px) {
+  .day {
+    display: grid;
+    grid-template-columns: 1fr 1fr;  /* 1:1 */
+    gap: 12px;
+  }
+  /* Title and fitness notes span across both columns */
+  .day .date-title { grid-column: 1 / -1; }
+  .day .fitness-notes { grid-column: 1 / -1; }
+  /* Default cards go to left column */
+  .day .card { grid-column: 1; }
+  /* Photo card sits in right column */
+  .day .photo-card { grid-column: 2; }
+}
+
 
