@@ -62,6 +62,10 @@ html, body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFo
 .photo-strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; align-items: center; }
 .photo-strip img { height: auto; max-height: 200px; width: auto; max-width: 100%; border-radius: 10px; object-fit: contain; background: #eee; display: block; }
 
+/* 預設隱藏左側欄位標籤（手機一欄顯示時不需要） */
+.row-label { display: none; }
+.left-rail { display: none; }
+
 /* Dark mode (prefers) */
 @media (prefers-color-scheme: dark) {
   body { background: #0b0b0b; color: #eaeaea; }
@@ -83,20 +87,61 @@ html, body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFo
   }
 }
 
-/* Wide-screen 1:1 two-column layout per day */
-@media (min-width: 960px) {
+/* Wide-screen three-column layout per day:
+   左：欄位標題（睡覺/運動/飲食）
+   中：原本內容（清單）
+   右：實物照片（填滿當天高度） */
+@media (min-width: 720px) {
   .day {
     display: grid;
-    grid-template-columns: 1fr 1fr;  /* 1:1 */
+    /* 左欄固定，中欄固定，右欄彈性 */
+    grid-template-columns: 200px 360px 1fr;
+    /* 明確定義每一列的區塊，確保左右同列高度一致 */
+    grid-template-areas:
+      "title title title"
+      "notes notes notes"
+      "label-sleep sleep photos"
+      "label-exercise exercise photos"
+      "label-diet diet photos";
     gap: 12px;
   }
-  /* Title and fitness notes span across both columns */
-  .day .date-title { grid-column: 1 / -1; }
-  .day .fitness-notes { grid-column: 1 / -1; }
-  /* Default cards go to left column */
-  .day .card { grid-column: 1; }
-  /* Photo card sits in right column */
-  .day .photo-card { grid-column: 2; }
+  /* 日期標題、備註跨三欄 */
+  .day .date-title { grid-area: title; }
+  .day .fitness-notes { grid-area: notes; }
+  /* 左欄標籤（只有睡覺/飲食兩列；運動這列預留空位以維持行高對齊） */
+  .day .row-label { 
+    display: block; 
+    font-weight: 700; 
+    color: #0f2a6b; 
+    padding: 8px; 
+    border: 1px solid #e5e7eb; 
+    border-radius: 10px; 
+    background: #fff;
+    white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .day .row-label--sleep { grid-area: label-sleep; }
+  .day .row-label--exercise { grid-area: label-exercise; }
+  .day .row-label--diet { grid-area: label-diet; }
+  /* 內容卡片（中欄） */
+  .day .sleep-card { grid-area: sleep; }
+  .day .exercise-card { grid-area: exercise; }
+  .day .diet-card { grid-area: diet; }
+  .day .card {
+    white-space: nowrap; 
+    overflow-x: auto; 
+    overflow-y: hidden;
+  }
+  /* 右側照片欄：維持水平捲動的條帶樣式 */
+  .day .photo-card { grid-area: photos; align-self: stretch; }
+  .day .photo-card .photo-strip img {
+    max-height: 300px;
+  }
+  /* 寬螢幕時僅隱藏「睡覺/飲食」卡片標題，運動保留標題於中欄 */
+  .day .sleep-card .card-title,
+  .day .diet-card .card-title,
+  .day .exercise-card .card-title { display: none; }
 }
 
 

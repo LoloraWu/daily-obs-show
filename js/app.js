@@ -99,7 +99,7 @@ function renderDayTo(root, day) {
   }
 
   // Sleep card
-  const sleepCard = el('section', 'card');
+  const sleepCard = el('section', 'card sleep-card');
   let sleepTitle = el('h2', 'card-title', '💤 睡覺時間');
   const sleepList = el('ul', 'list');
   const sleepSegments = [];
@@ -135,6 +135,14 @@ function renderDayTo(root, day) {
     warn.textContent = '  ❌ 晚睡';
     sleepTitle.appendChild(warn);
   }
+  // For wide screens: left column label for Sleep (kept together with card title for mobile)
+  const sleepLabel = el('div', 'row-label row-label--sleep', '💤 睡覺時間');
+  if (lateSleep) {
+    const warn2 = el('span');
+    warn2.textContent = '  ❌ 晚睡';
+    sleepLabel.appendChild(warn2);
+  }
+  dayBox.appendChild(sleepLabel);
   sleepCard.appendChild(sleepTitle);
   sleepCard.appendChild(sleepList);
   dayBox.appendChild(sleepCard);
@@ -157,7 +165,10 @@ function renderDayTo(root, day) {
     exList.appendChild(li);
   });
   if (exList.children.length) {
-    const exCard = el('section', 'card');
+    // Left column label for Exercise in row 2
+    const exLabel = el('div', 'row-label row-label--exercise', '🏃‍♀️ 運動');
+    dayBox.appendChild(exLabel);
+    const exCard = el('section', 'card exercise-card');
     exCard.appendChild(el('h2', 'card-title', '🏃‍♀️ 運動'));
     exCard.appendChild(exList);
     dayBox.appendChild(exCard);
@@ -174,7 +185,7 @@ function renderDayTo(root, day) {
     dietList.appendChild(li);
   });
   if (dietList.children.length) {
-    const dietCard = el('section', 'card');
+    const dietCard = el('section', 'card diet-card');
     const dietTitle = el('h2', 'card-title', '🍎 飲食');
     // Add late eating indicator by time (ignore checkbox): any diet time >= 20:00
     const lateEating = (day.diet || []).some(d => {
@@ -186,6 +197,14 @@ function renderDayTo(root, day) {
       warn.textContent = '  ❌ 八點後進食';
       dietTitle.appendChild(warn);
     }
+    // Left column label for Diet with same late badge
+    const dietLabel = el('div', 'row-label row-label--diet', '🍎 飲食');
+    if (lateEating) {
+      const warn2 = el('span');
+      warn2.textContent = '  ❌ 八點後進食';
+      dietLabel.appendChild(warn2);
+    }
+    dayBox.appendChild(dietLabel);
     dietCard.appendChild(dietTitle);
     dietCard.appendChild(dietList);
     dayBox.appendChild(dietCard);
