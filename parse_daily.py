@@ -38,6 +38,16 @@ def remove_stored_tags(text: str) -> str:
     return re.sub(r"\s*(?:#\s*)*🔗\s*STORED\b", "", text).strip()
 
 
+def is_policy_line(text: str) -> bool:
+    """Return True if the line is an informational policy that should not appear in HTML.
+    Currently filters: '20點後不進食 (睡前三小時不進食)' and any line containing '20點後不進食'.
+    """
+    if not text:
+        return False
+    t = str(text).strip()
+    return ("20點後不進食" in t)
+
+
 def parse_daily_markdown(md_path: str) -> Dict[str, Any]:
     with open(md_path, "r", encoding="utf-8") as f:
         lines = [ln.rstrip("\n") for ln in f]
@@ -222,7 +232,10 @@ def parse_daily_markdown(md_path: str) -> Dict[str, Any]:
                 cur_diet["images"].extend(extract_images(raw))
                 # strip wiki image embeds and inline fields, then remove stored tag markers
                 base = strip_inline_fields(strip_wiki_images(raw)).strip()
-                cur_diet["item"] = remove_stored_tags(base)
+                base = remove_stored_tags(base)
+                # Drop informational policy line from appearing in HTML
+                if not is_policy_line(base):
+                    cur_diet["item"] = base
                 continue
             if line.startswith("飲食照片："):
                 cur_diet["images"].extend(extract_images(line))
@@ -249,7 +262,8 @@ def parse_daily_markdown(md_path: str) -> Dict[str, Any]:
             # Skip pure wiki-link lines like [[...]] after stripping
             if re.fullmatch(r"\[\[[^\]]+\]\]", clean or ''):
                 clean = ''
-            if clean:
+            # Drop informational policy lines (e.g., '20點後不進食 (睡前三小時不進食)')
+            if clean and not is_policy_line(clean):
                 if cur_diet["item"]:
                     # separate with a space
                     cur_diet["item"] = (cur_diet["item"] + " " + clean).strip()
