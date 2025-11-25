@@ -144,4 +144,26 @@ html, body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFo
   .day .exercise-card .card-title { display: none; }
 }
 
+/* Lightbox */
+.no-scroll { overflow: hidden; }
+#lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.9);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  cursor: zoom-out;
+}
+#lightbox-overlay.open { display: flex; }
+#lightbox-overlay img {
+  max-width: 90vw;
+  max-height: 90vh;
+  transform: scale(1);
+  transition: transform 0.08s ease-out;
+  touch-action: none; /* allow custom pinch handling */
+  user-select: none;
+}
+
 

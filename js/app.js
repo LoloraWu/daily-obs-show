@@ -234,6 +234,10 @@ function renderDayTo(root, day) {
     }
     img.onerror = tryNext;
     tryNext();
+    // Click to open lightbox
+    img.addEventListener('click', () => {
+      openLightbox(img.currentSrc || img.src);
+    });
     photoStrip.appendChild(img);
   });
   if (photoStrip.children.length) {
@@ -243,6 +247,105 @@ function renderDayTo(root, day) {
   }
 
   root.appendChild(dayBox);
+}
+
+// ------- Lightbox (click-to-zoom with wheel and pinch) -------
+let LB = {
+  overlay: null,
+  image: null,
+  isOpen: false,
+  scale: 1,
+  minScale: 1,
+  maxScale: 6,
+  lastTouches: [],
+};
+
+function initLightbox() {
+  if (LB.overlay) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'lightbox-overlay';
+  const img = document.createElement('img');
+  overlay.appendChild(img);
+  document.body.appendChild(overlay);
+  LB.overlay = overlay;
+  LB.image = img;
+
+  // Close on click
+  overlay.addEventListener('click', () => {
+    closeLightbox();
+  });
+  // Prevent wheel and touch from scrolling page when open
+  overlay.addEventListener('wheel', (e) => {
+    if (!LB.isOpen) return;
+    e.preventDefault();
+    const delta = Math.sign(e.deltaY);
+    const factor = delta > 0 ? 0.9 : 1.1;
+    setLightboxScale(LB.scale * factor);
+  }, { passive: false });
+
+  // Touch pinch
+  overlay.addEventListener('touchstart', (e) => {
+    if (!LB.isOpen) return;
+    if (e.touches.length >= 2) {
+      LB.lastTouches = [copyTouch(e.touches[0]), copyTouch(e.touches[1])];
+    }
+  }, { passive: true });
+
+  overlay.addEventListener('touchmove', (e) => {
+    if (!LB.isOpen) return;
+    if (e.touches.length >= 2 && LB.lastTouches.length === 2) {
+      e.preventDefault();
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      const prevDist = distance(LB.lastTouches[0], LB.lastTouches[1]);
+      const curDist = distance(t1, t2);
+      if (prevDist > 0) {
+        const factor = curDist / prevDist;
+        setLightboxScale(LB.scale * factor);
+      }
+      LB.lastTouches = [copyTouch(t1), copyTouch(t2)];
+    }
+  }, { passive: false });
+}
+
+function openLightbox(src) {
+  initLightbox();
+  if (!LB.overlay || !LB.image) return;
+  LB.image.src = src || '';
+  LB.scale = 1;
+  applyLightboxTransform();
+  LB.overlay.classList.add('open');
+  document.documentElement.classList.add('no-scroll');
+  LB.isOpen = true;
+}
+
+function closeLightbox() {
+  if (!LB.overlay) return;
+  LB.overlay.classList.remove('open');
+  document.documentElement.classList.remove('no-scroll');
+  LB.isOpen = false;
+  LB.scale = 1;
+  applyLightboxTransform();
+}
+
+function setLightboxScale(s) {
+  LB.scale = Math.max(LB.minScale, Math.min(LB.maxScale, s));
+  applyLightboxTransform();
+}
+
+function applyLightboxTransform() {
+  if (!LB.image) return;
+  LB.image.style.transform = `scale(${LB.scale})`;
+}
+
+function copyTouch(t) {
+  return { clientX: t.clientX, clientY: t.clientY, identifier: t.identifier };
+}
+
+function distance(a, b) {
+  const dx = (a.clientX || 0) - (b.clientX || 0);
+  const dy = (a.clientY || 0) - (b.clientY || 0);
+  return Math.hypot(dx, dy);
 }
 
 function render(data) {
@@ -275,6 +378,7 @@ function render(data) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  initLightbox();
   const data = getInlineData();
   if (data) {
     // Set header title to date range
