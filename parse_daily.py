@@ -158,12 +158,21 @@ def parse_daily_markdown(md_path: str) -> Dict[str, Any]:
             continue
 
         if collecting_fitness:
-            # Stop conditions: new bullet/checkbox/section heading or empty line
-            if (not line) or line.startswith("- ") or line.startswith("#### "):
+            # Stop conditions: blank line or new section heading
+            if (not line) or line.startswith("#### "):
                 collecting_fitness = False
                 # fall-through to allow normal processing of this line
             else:
-                clean_note = strip_inline_fields(strip_wiki_images(raw)).strip()
+                # Skip checkboxes within this block
+                if line.startswith("- ["):
+                    continue
+                # Support bullet subitems like "- 喉嚨痛"
+                if line.startswith("- "):
+                    payload = line[2:].strip()
+                else:
+                    payload = raw
+                clean_note = strip_inline_fields(strip_wiki_images(payload)).strip()
+                clean_note = remove_stored_tags(clean_note)
                 if clean_note:
                     result["fitness_notes"].append(clean_note)
                 # handled as part of fitness collection
